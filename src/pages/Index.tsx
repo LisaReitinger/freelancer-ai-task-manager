@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { TaskInput } from "@/components/TaskInput";
 import { KanbanBoard, Task } from "@/components/KanbanBoard";
 import { useToast } from "@/hooks/use-toast";
+import { generateTasks } from "@/services/gemini";
 
 const Index = () => {
   const { toast } = useToast();
@@ -37,37 +38,24 @@ const Index = () => {
     },
   ]);
 
-  const handleGenerateTasks = (projectIdea: string) => {
+  const handleGenerateTasks = async (projectIdea: string) => {
     toast({
       title: "AI is thinking...",
       description: "Generating tasks from your project idea",
     });
 
-    // Simulate AI task generation
-    setTimeout(() => {
-      const newTasks: Task[] = [
-        {
-          id: Date.now().toString(),
-          title: `Research for ${projectIdea}`,
-          description: "Gather requirements and analyze project scope",
-          status: "todo",
-          priority: "high",
-        },
-        {
-          id: (Date.now() + 1).toString(),
-          title: "Create project structure",
-          description: "Set up folders, dependencies, and initial files",
-          status: "todo",
-          priority: "medium",
-        },
-        {
-          id: (Date.now() + 2).toString(),
-          title: "Implement core features",
-          description: "Build the main functionality based on requirements",
-          status: "todo",
-          priority: "high",
-        },
-      ];
+    try {
+      // Call Gemini AI to generate tasks
+      const aiTasks = await generateTasks(projectIdea);
+      
+      // Convert AI response to our Task format
+      const newTasks: Task[] = aiTasks.map((aiTask, index) => ({
+        id: `${Date.now()}-${index}`,
+        title: aiTask.title,
+        description: aiTask.description,
+        status: "todo" as const,
+        priority: aiTask.priority,
+      }));
 
       setTasks([...tasks, ...newTasks]);
       
@@ -75,7 +63,14 @@ const Index = () => {
         title: "Tasks generated!",
         description: `Created ${newTasks.length} new tasks for your project`,
       });
-    }, 1500);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate tasks. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Task generation error:", error);
+    }
   };
 
   const handleTaskMove = (taskId: string, newStatus: Task["status"]) => {
