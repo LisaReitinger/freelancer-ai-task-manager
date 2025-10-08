@@ -1,0 +1,412 @@
+<context>
+# Overview
+The Freelancer AI Task Manager is an intelligent project planning tool designed for freelancers and solo developers. It transforms natural language project descriptions into structured, actionable task lists using AI (Gemini API). Users can describe a project idea in one sentence, and the AI breaks it down into manageable tasks displayed on an interactive Kanban board. Tasks persist in Supabase, allowing users to track progress across sessions. An AI Assistant provides contextual guidance and refinement suggestions.
+
+**Problem Solved:** Freelancers struggle with project scoping and breaking down client requests into actionable steps. This tool automates the planning phase, saving time and reducing mental overhead.
+
+**Target Users:** Freelance developers, designers, consultants, and solo entrepreneurs who need to quickly scope and organize project work.
+
+**Value Proposition:** Turn vague ideas into organized action plans in seconds, with AI-powered assistance to refine and adapt as projects evolve.
+
+# Core Features
+
+## 1. AI Task Generation
+- **What:** Users input a single sentence describing their project (e.g., "Build a portfolio website with blog")
+- **Why:** Eliminates the cognitive load of breaking down projects manually
+- **How:** Gemini API receives the prompt, applies structured reasoning, and returns JSON with task objects (title, description, priority, estimated time)
+
+## 2. Interactive Kanban Board
+- **What:** Visual task management with drag-and-drop between To-Do, In Progress, and Done columns
+- **Why:** Provides intuitive progress tracking and workflow visualization
+- **How:** React state management with drag-and-drop events, persisting status changes to Supabase in real-time
+
+## 3. Task Persistence & CRUD
+- **What:** All tasks save automatically to Supabase; users can edit, delete, and create tasks manually
+- **Why:** Data must persist across sessions and devices
+- **How:** Supabase PostgreSQL database with real-time subscriptions for live updates
+
+## 4. AI Assistant Chat
+- **What:** Conversational interface where users can refine their project plan ("Add authentication tasks", "Make the design tasks more detailed")
+- **Why:** Allows iterative improvement without regenerating entire task lists
+- **How:** Stateful chat interface using Gemini API with conversation history, sending context about existing tasks
+
+## 5. User Authentication
+- **What:** Email/password and OAuth (Google) authentication
+- **Why:** Multi-device access and data privacy
+- **How:** Supabase Auth with session management and row-level security
+
+# User Experience
+
+## User Personas
+**Lisa (Primary):** Junior developer learning full-stack development, needs guidance on breaking down projects, values clean code practices and learning opportunities.
+
+**Freelance Developer:** Experienced coder who needs to quickly scope client projects, values speed and reliability.
+
+## Key User Flows
+
+### 1. First-Time User
+1. Land on homepage (no auth required initially for trial)
+2. See pre-populated example tasks
+3. Enter a project idea in the input box
+4. Click "Generate Tasks" → see AI-generated tasks appear
+5. Drag a task to "In Progress" → experience persistence
+6. Sign up to save their work permanently
+
+### 2. Returning User
+1. Sign in via Supabase Auth
+2. See their previous projects in a projects list (sidebar)
+3. Select a project → see associated tasks load
+4. Open AI Assistant → refine tasks with conversation
+5. Mark tasks complete → see progress visualization
+
+## UI/UX Considerations
+- **Immediate Feedback:** Loading states, toast notifications, smooth animations
+- **Error Handling:** Graceful fallbacks if AI fails (retry button, manual task creation)
+- **Accessibility:** Keyboard navigation, ARIA labels, color contrast
+- **Mobile-First:** Responsive design (already implemented with Tailwind)
+</context>
+
+<PRD>
+# Technical Architecture
+
+## System Components
+
+### Frontend (React + TypeScript + Vite)
+- **State Management:** React Query for server state, Zustand or Context API for client state
+- **UI Library:** shadcn/ui (already integrated) + Tailwind CSS
+- **Routing:** React Router v6 (already set up)
+- **Forms:** React Hook Form + Zod validation
+- **Drag-and-Drop:** Native HTML5 drag-and-drop (already working)
+
+### Backend (Supabase)
+- **Database:** PostgreSQL with row-level security (RLS)
+- **Authentication:** Supabase Auth (email/password + OAuth)
+- **Real-Time:** Supabase real-time subscriptions for live task updates
+- **Storage:** Store user avatars and project attachments (future enhancement)
+
+### AI Integration (Google Gemini API)
+- **Task Generation:** gemini-1.5-flash model for speed and cost efficiency
+- **Prompt Engineering:** Structured prompts with JSON schema validation
+- **Fallbacks:** Retry logic, exponential backoff, error boundaries
+
+## Data Models
+
+### Users Table (Supabase Auth)
+```sql
+- id: uuid (primary key, from auth.users)
+- email: text
+- created_at: timestamp
+- updated_at: timestamp
+```
+
+### Projects Table
+```sql
+- id: uuid (primary key)
+- user_id: uuid (foreign key → auth.users)
+- name: text
+- description: text
+- created_at: timestamp
+- updated_at: timestamp
+```
+
+### Tasks Table
+```sql
+- id: uuid (primary key)
+- project_id: uuid (foreign key → projects)
+- title: text
+- description: text
+- status: enum ('todo', 'in-progress', 'done')
+- priority: enum ('low', 'medium', 'high')
+- order: integer (for custom sorting)
+- estimated_hours: integer (nullable)
+- created_at: timestamp
+- updated_at: timestamp
+```
+
+### Conversations Table (AI Assistant)
+```sql
+- id: uuid (primary key)
+- project_id: uuid (foreign key → projects)
+- user_message: text
+- ai_response: text
+- created_at: timestamp
+```
+
+## APIs and Integrations
+
+### Gemini API Endpoints
+- **POST /v1beta/models/gemini-1.5-flash:generateContent**
+  - Input: Project description + structured prompt
+  - Output: JSON array of tasks
+
+### Supabase Client API
+- **Authentication:** `supabase.auth.signUp()`, `signInWithPassword()`, `signInWithOAuth()`
+- **Database:** `supabase.from('tasks').select()`, `.insert()`, `.update()`, `.delete()`
+- **Real-Time:** `supabase.channel('tasks').on('postgres_changes', callback)`
+
+### Environment Variables
+```
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=xxx
+VITE_GEMINI_API_KEY=xxx
+```
+
+# Development Roadmap
+
+## Phase 0: Codebase Analysis & Environment Setup (Foundation)
+**Goal:** Understand existing code, set up environment variables, establish project structure patterns.
+
+**Scope:**
+- Create comprehensive code documentation for existing components
+- Set up `.env` and `.env.example` files
+- Configure Supabase project and get credentials
+- Get Gemini API key from Google AI Studio
+- Create utility functions directory structure
+- Establish TypeScript types for all entities (Task, Project, User)
+
+**Why First:** Cannot proceed with integration without credentials and proper typing.
+
+---
+
+## Phase 1: Gemini AI Task Generation (First Real Feature)
+**Goal:** Replace mock task generation with real AI-powered generation, giving immediate visible value.
+
+**Scope:**
+- Create `src/services/gemini.ts` service module
+- Implement prompt engineering for task generation
+- Add JSON schema validation (Zod) for AI responses
+- Handle API errors with user-friendly messages
+- Add loading states and optimistic UI updates
+- Test with various project descriptions
+
+**Why Second:** This is the core value proposition and builds on existing UI. Users can see AI in action immediately.
+
+**Learning Focus:** API integration, error handling, asynchronous patterns, prompt engineering basics.
+
+---
+
+## Phase 2: Supabase Project Setup & Database Schema
+**Goal:** Set up backend infrastructure for data persistence.
+
+**Scope:**
+- Create Supabase project
+- Define database schema (projects, tasks tables)
+- Write SQL migration files
+- Configure row-level security (RLS) policies
+- Create TypeScript types from Supabase schema
+- Set up Supabase client in React app
+
+**Why Third:** Now that tasks can be generated, we need to save them. This is purely backend setup before we wire it to the UI.
+
+**Learning Focus:** Database design, PostgreSQL, RLS policies, migrations, backend-frontend type safety.
+
+---
+
+## Phase 3: Task Persistence & CRUD Operations
+**Goal:** Connect Kanban board to Supabase so tasks persist and can be modified.
+
+**Scope:**
+- Replace local state with React Query + Supabase queries
+- Implement CREATE: Save AI-generated tasks to database
+- Implement READ: Load tasks on page mount
+- Implement UPDATE: Sync drag-and-drop status changes to database
+- Implement DELETE: Add delete button to task cards
+- Add EDIT: Inline editing for task title/description
+- Set up real-time subscriptions for multi-device sync
+
+**Why Fourth:** Users can now generate AND save tasks, making the app functional for real use.
+
+**Learning Focus:** React Query patterns, CRUD operations, real-time subscriptions, state synchronization.
+
+---
+
+## Phase 4: User Authentication System
+**Goal:** Add user accounts so each user has private task lists.
+
+**Scope:**
+- Create signup/login pages (email + password)
+- Add Google OAuth integration
+- Implement auth state management (context or Zustand)
+- Add protected routes and redirects
+- Create user profile settings page
+- Update database queries to filter by user_id
+- Add logout functionality
+
+**Why Fifth:** App is functional but not multi-user. Authentication unlocks true personalization and security.
+
+**Learning Focus:** Authentication flows, OAuth, protected routes, session management, security best practices.
+
+---
+
+## Phase 5: Project Management Features
+**Goal:** Allow users to create multiple projects and organize tasks under projects.
+
+**Scope:**
+- Create project list view in sidebar
+- Add "New Project" button and modal
+- Implement project CRUD operations
+- Add project selector (dropdown or tabs)
+- Filter tasks by selected project
+- Add project deletion with cascade (delete associated tasks)
+- Style active project indicator
+
+**Why Sixth:** Users now have a full organizational structure. This is essential for freelancers managing multiple clients.
+
+**Learning Focus:** Relational data management, parent-child relationships, cascading deletes, complex state management.
+
+---
+
+## Phase 6: AI Assistant Chat Interface
+**Goal:** Add conversational AI for refining task lists dynamically.
+
+**Scope:**
+- Create chat UI page (`/ai-assistant`)
+- Build message list component with user/AI bubbles
+- Implement conversation history persistence (Supabase)
+- Send existing tasks as context in AI prompts
+- Parse AI responses to update tasks (add, modify, remove)
+- Add suggested prompts ("Make tasks more detailed", "Add testing tasks")
+- Style with glassmorphic design matching existing UI
+
+**Why Seventh:** This is an advanced feature that enhances the core product. Not MVP but high value-add.
+
+**Learning Focus:** Chat UI patterns, context management, prompt engineering with history, parsing AI responses into actions.
+
+---
+
+## Phase 7: Polish, Testing & Deployment
+**Goal:** Make the app production-ready and deploy it.
+
+**Scope:**
+- Add comprehensive error boundaries
+- Implement loading skeletons for all async operations
+- Add empty states (no tasks, no projects)
+- Write unit tests for utility functions
+- Test AI edge cases (malformed responses, API failures)
+- Set up CI/CD with GitHub Actions
+- Deploy frontend to Vercel/Netlify
+- Configure Supabase production environment
+- Add analytics (Vercel Analytics or Plausible)
+- Create demo video for README
+
+**Why Last:** Polish happens after functionality is solid. Deployment proves the app is real and recruiter-ready.
+
+**Learning Focus:** Testing strategies, CI/CD, deployment processes, DevOps basics, portfolio presentation.
+
+---
+
+# Logical Dependency Chain
+
+**Strict Order (Cannot Reorder):**
+1. **Environment Setup** → Without credentials, nothing works
+2. **AI Integration** → Proves core value, builds on existing UI
+3. **Database Setup** → Cannot persist without schema
+4. **CRUD Operations** → Cannot save/load without database + CRUD logic
+5. **Authentication** → Multi-user features require auth first
+6. **Projects** → Organizational structure needs auth and CRUD foundations
+7. **AI Assistant** → Advanced feature layered on top of working app
+8. **Polish & Deploy** → Final step to make it production-ready
+
+**Why This Order:**
+- Immediate visual feedback (AI working) keeps motivation high
+- Each phase builds directly on the previous
+- Authentication comes after basic functionality works (learn concepts first, add security second)
+- Advanced features (AI Assistant) come last when foundation is solid
+
+---
+
+# Risks and Mitigations
+
+## Technical Challenges
+
+### Risk: Gemini API Rate Limits or Cost
+**Mitigation:** 
+- Use gemini-1.5-flash (cheapest, fastest)
+- Implement caching for identical prompts
+- Add request debouncing (prevent spam clicks)
+- Set up cost alerts in Google Cloud Console
+
+### Risk: AI Generates Malformed JSON
+**Mitigation:**
+- Strict JSON schema validation with Zod
+- Retry logic with refined prompts
+- Fallback to manual task creation if AI fails after 3 retries
+
+### Risk: Real-Time Sync Conflicts (Multiple Devices)
+**Mitigation:**
+- Use Supabase real-time subscriptions with optimistic updates
+- Implement last-write-wins strategy
+- Show conflict indicators in UI (future enhancement)
+
+### Risk: Learning Curve Too Steep
+**Mitigation:**
+- Break tasks into 30-60 minute chunks
+- Include "Why it matters" in each task
+- Provide starter code snippets (not full solutions)
+- Encourage debugging with questions first
+
+## MVP Definition
+
+**Must-Have (Recruiter-Ready):**
+- AI task generation from text input ✅
+- Kanban board with persistence ✅
+- User authentication (email + Google OAuth) ✅
+- Basic project management (create, list, switch) ✅
+- Clean, responsive UI with error handling ✅
+- Deployed live with demo video ✅
+
+**Nice-to-Have (Post-MVP):**
+- AI Assistant chat interface
+- Task editing with rich text
+- Bulk task operations (delete multiple, reorder)
+- Mobile app (React Native)
+- n8n automation workflows
+- Team collaboration features
+
+---
+
+# Appendix
+
+## Technology Justifications
+
+**Why Gemini over OpenAI?**
+- Free tier with generous limits
+- gemini-1.5-flash is faster and cheaper than GPT-3.5
+- Native JSON mode ensures structured responses
+
+**Why Supabase over Firebase?**
+- PostgreSQL (real SQL database)
+- Better TypeScript support
+- Row-level security built-in
+- Free tier includes auth + database + real-time
+
+**Why React Query over Redux?**
+- Less boilerplate for server state
+- Built-in caching and refetching
+- Optimistic updates out of the box
+
+## Estimated Time Breakdown (Learning Mode)
+- Phase 0: 2-3 hours
+- Phase 1: 4-6 hours
+- Phase 2: 3-4 hours
+- Phase 3: 6-8 hours
+- Phase 4: 5-7 hours
+- Phase 5: 4-5 hours
+- Phase 6: 6-8 hours (optional)
+- Phase 7: 4-6 hours
+
+**Total MVP (Phases 0-5 + 7):** ~30-40 hours of focused learning and building
+
+**Full Project (All Phases):** ~40-50 hours
+
+## Success Metrics
+- Can generate tasks for any project description in <3 seconds
+- Tasks persist across browser refreshes
+- Authentication works seamlessly (email + Google)
+- App loads in <2 seconds on desktop
+- Zero runtime errors in production
+- Clean, readable code that follows React best practices
+- GitHub repo shows professional commit history
+- Live demo impresses recruiters (proven by portfolio reviews)
+</PRD>
+

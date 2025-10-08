@@ -1,0 +1,704 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Setup Environment Variables",
+        "description": "Create .env and .env.example files with required configuration for Supabase and Gemini API",
+        "details": "Create two files in the project root: .env (for local development) and .env.example (as a template). Include the following variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, and VITE_GEMINI_API_KEY. Ensure .env is added to .gitignore to prevent credentials from being committed. Add comments explaining each variable's purpose.",
+        "testStrategy": "Verify that environment variables are correctly loaded in the application using console.log during development. Test that the application shows appropriate error messages when environment variables are missing.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Create TypeScript Type Definitions",
+        "description": "Define TypeScript interfaces for all core entities (User, Project, Task, Conversation)",
+        "details": "Create a types directory with index.ts exporting all types. Define interfaces for User (matching Supabase auth.users schema), Project (id, name, description, timestamps), Task (id, project_id, title, description, status as enum, priority as enum, order, estimated_hours, timestamps), and Conversation (id, project_id, user_message, ai_response, timestamps). Include proper typing for enums (TaskStatus, TaskPriority) and ensure all types align with the database schema defined in the PRD.",
+        "testStrategy": "Verify type definitions by using them in sample code. Ensure they match the database schema exactly. Check for type errors using TypeScript compiler.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Setup Supabase Client",
+        "description": "Configure Supabase client for connecting to the Supabase backend",
+        "details": "Create a src/lib/supabase.ts file that initializes and exports the Supabase client. Use environment variables for URL and anon key. Implement proper error handling for connection failures. Create a custom hook (useSupabase) that provides access to the client throughout the application. Add TypeScript type definitions using the generated types from Supabase.",
+        "testStrategy": "Test the connection by making a simple query to the Supabase instance. Verify error handling by temporarily using invalid credentials. Ensure the hook correctly provides the client to components.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Setup Gemini API Service",
+        "description": "Create a service module for interacting with Google's Gemini API",
+        "details": "Create src/services/gemini.ts with functions to interact with the Gemini API. Implement generateTasks(projectDescription: string): Promise<Task[]> that calls the Gemini API with a structured prompt to generate tasks. Use the gemini-1.5-flash model for optimal performance. Implement proper error handling, request timeout, and retry logic with exponential backoff. Use the API key from environment variables.",
+        "testStrategy": "Test the service with various project descriptions. Verify error handling by testing with invalid API keys and network failures. Check that the response format matches the expected Task interface.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Implement JSON Schema Validation",
+        "description": "Add Zod validation for AI-generated task responses",
+        "details": "Create a validation schema using Zod in src/lib/validation.ts that matches the Task interface. Implement a validateTasks function that takes the raw API response and validates it against the schema, returning properly typed Task objects or throwing detailed validation errors. Handle edge cases like missing fields or incorrect data types by providing default values where appropriate.",
+        "testStrategy": "Test with various API responses including valid data, malformed JSON, missing fields, and incorrect data types. Verify that validation errors are properly caught and reported.",
+        "priority": "high",
+        "dependencies": [
+          2,
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Create Supabase Database Schema",
+        "description": "Define and create the database schema in Supabase",
+        "details": "Using the Supabase dashboard, create the following tables: projects (id, user_id, name, description, created_at, updated_at), tasks (id, project_id, title, description, status, priority, order, estimated_hours, created_at, updated_at), and conversations (id, project_id, user_message, ai_response, created_at). Define proper constraints, foreign keys, and indexes. Create enums for task status ('todo', 'in-progress', 'done') and priority ('low', 'medium', 'high'). Export the SQL as a migration file for version control.",
+        "testStrategy": "Verify the schema by inserting test data through the Supabase dashboard. Check that foreign key constraints work correctly. Test queries to ensure indexes are effective.",
+        "priority": "high",
+        "dependencies": [
+          3
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Configure Row-Level Security Policies",
+        "description": "Implement RLS policies to secure data access in Supabase",
+        "details": "For each table (projects, tasks, conversations), create RLS policies that ensure users can only access their own data. Enable RLS on all tables. For projects table, create policies for select, insert, update, and delete that check user_id = auth.uid(). For tasks and conversations tables, create policies that join with the projects table to verify ownership. Write and save the SQL for these policies in version control.",
+        "testStrategy": "Test policies by attempting to access data as different users. Verify that users cannot access other users' data. Test edge cases like unauthenticated access and invalid user IDs.",
+        "priority": "high",
+        "dependencies": [
+          6
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Setup React Query for Server State",
+        "description": "Configure React Query for managing server state and API requests",
+        "details": "Install React Query and set up a QueryClientProvider in the app's entry point. Create a src/lib/react-query.ts file with custom hooks for common query patterns. Implement default options for retries, caching, and stale time. Create a custom useQuery hook that integrates with Supabase for data fetching. Add proper TypeScript typing for all query results.",
+        "testStrategy": "Test the setup by implementing a simple query and verifying that data is fetched and cached correctly. Check that loading and error states work as expected.",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Implement Zustand Store for Client State",
+        "description": "Set up Zustand for managing client-side state",
+        "details": "Install Zustand and create a src/stores directory. Implement separate stores for different concerns: userStore (authentication state), projectStore (current project, project list), and uiStore (UI state like modals, sidebars). Use TypeScript for type safety. Implement persistence for relevant stores using zustand/middleware. Ensure stores are properly integrated with React components.",
+        "testStrategy": "Test each store by manipulating state and verifying that components re-render correctly. Check that persistence works across page refreshes. Verify type safety with TypeScript.",
+        "priority": "medium",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Implement Task Generation UI",
+        "description": "Create the UI for generating tasks from a project description",
+        "details": "Create a TaskGenerationForm component with a text input for project description and a submit button. Implement form validation using React Hook Form. Connect the form to the Gemini API service. Add loading states, error handling, and success feedback. Style the component using Tailwind CSS and shadcn/ui. Ensure the component is responsive and accessible.",
+        "testStrategy": "Test the form with various inputs including empty strings, very short descriptions, and very long descriptions. Verify loading states and error handling. Test accessibility using keyboard navigation and screen readers.",
+        "priority": "high",
+        "dependencies": [
+          4,
+          5,
+          8
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Implement Task List Component",
+        "description": "Create a component to display tasks in a list format",
+        "details": "Create a TaskList component that displays tasks with their title, description, priority, and status. Implement sorting and filtering options. Add pagination for large task lists. Style the component using Tailwind CSS and shadcn/ui. Ensure the component is responsive and accessible. Add empty state handling for when no tasks exist.",
+        "testStrategy": "Test the component with various task lists including empty lists, lists with one item, and lists with many items. Verify sorting and filtering. Test accessibility using keyboard navigation and screen readers.",
+        "priority": "medium",
+        "dependencies": [
+          2,
+          8,
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Implement Kanban Board Component",
+        "description": "Create an interactive Kanban board for task management",
+        "details": "Create a KanbanBoard component with three columns: To-Do, In Progress, and Done. Implement drag-and-drop functionality using HTML5 drag-and-drop API. Connect the component to the task store. Add visual feedback for dragging and dropping. Ensure the component is responsive and works on mobile devices. Style the component using Tailwind CSS and shadcn/ui.",
+        "testStrategy": "Test drag-and-drop between all columns. Verify that task status updates correctly. Test on different screen sizes and devices. Check accessibility for keyboard users.",
+        "priority": "high",
+        "dependencies": [
+          2,
+          8,
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Implement Task Card Component",
+        "description": "Create a component for displaying individual tasks in the Kanban board",
+        "details": "Create a TaskCard component that displays task title, description, priority, and estimated time. Add buttons for editing and deleting tasks. Implement drag handle for drag-and-drop. Style the component using Tailwind CSS and shadcn/ui. Ensure the component is responsive and accessible. Add visual indicators for different priorities (color coding).",
+        "testStrategy": "Test the component with various task data. Verify that edit and delete buttons work correctly. Test drag-and-drop functionality. Check accessibility for keyboard users and screen readers.",
+        "priority": "medium",
+        "dependencies": [
+          2,
+          12
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Implement Task Creation API",
+        "description": "Create API functions for saving tasks to Supabase",
+        "details": "In src/services/tasks.ts, implement createTask and createTasks functions that save task data to Supabase. Handle single task creation and batch creation for AI-generated tasks. Implement proper error handling and validation. Use TypeScript for type safety. Ensure tasks are associated with the correct project and user.",
+        "testStrategy": "Test creating single tasks and batches of tasks. Verify that tasks are saved correctly in the database. Test error handling with invalid data and network failures.",
+        "priority": "high",
+        "dependencies": [
+          3,
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Implement Task Retrieval API",
+        "description": "Create API functions for fetching tasks from Supabase",
+        "details": "In src/services/tasks.ts, implement getTasks function that fetches tasks from Supabase. Add filtering by project, status, and priority. Implement sorting options. Add pagination for large result sets. Use TypeScript for type safety. Optimize queries for performance using appropriate indexes.",
+        "testStrategy": "Test fetching tasks with various filters and sorting options. Verify that pagination works correctly. Test performance with large datasets.",
+        "priority": "high",
+        "dependencies": [
+          3,
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Implement Task Update API",
+        "description": "Create API functions for updating tasks in Supabase",
+        "details": "In src/services/tasks.ts, implement updateTask function that updates task data in Supabase. Handle partial updates for individual fields. Implement proper error handling and validation. Use TypeScript for type safety. Add optimistic updates for better user experience.",
+        "testStrategy": "Test updating various task fields. Verify that updates are saved correctly in the database. Test error handling with invalid data and network failures.",
+        "priority": "high",
+        "dependencies": [
+          3,
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Implement Task Deletion API",
+        "description": "Create API functions for deleting tasks from Supabase",
+        "details": "In src/services/tasks.ts, implement deleteTask function that removes tasks from Supabase. Add confirmation for deletion. Implement proper error handling. Use TypeScript for type safety. Add optimistic updates for better user experience.",
+        "testStrategy": "Test deleting tasks and verify they are removed from the database. Test error handling with invalid IDs and network failures.",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Connect Task Generation to Supabase",
+        "description": "Integrate AI task generation with Supabase persistence",
+        "details": "Modify the task generation flow to save AI-generated tasks to Supabase. Update the TaskGenerationForm component to call the createTasks API function after successful generation. Add loading states and error handling. Implement optimistic updates for better user experience.",
+        "testStrategy": "Test the end-to-end flow from entering a project description to seeing tasks saved in the database. Verify error handling and loading states.",
+        "priority": "high",
+        "dependencies": [
+          10,
+          14
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Implement Real-Time Task Updates",
+        "description": "Add real-time subscriptions for task changes",
+        "details": "Use Supabase real-time subscriptions to listen for changes to tasks. Create a custom hook useTaskSubscription that subscribes to changes for the current project. Update the local state when changes are detected. Handle different types of changes (insert, update, delete). Implement conflict resolution for simultaneous updates.",
+        "testStrategy": "Test real-time updates by making changes in one browser window and verifying they appear in another. Test conflict resolution with simultaneous updates.",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          8,
+          15
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Implement Drag-and-Drop Status Updates",
+        "description": "Connect Kanban board drag-and-drop to task status updates",
+        "details": "Modify the KanbanBoard component to update task status when tasks are dragged between columns. Call the updateTask API function when a task is dropped in a new column. Add optimistic updates for better user experience. Handle errors by reverting to the previous state if the update fails.",
+        "testStrategy": "Test dragging tasks between columns and verify that status updates correctly in the database. Test error handling by simulating network failures during updates.",
+        "priority": "high",
+        "dependencies": [
+          12,
+          16
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 21,
+        "title": "Implement Task Editing UI",
+        "description": "Create UI for editing task details",
+        "details": "Create a TaskEditForm component that allows editing of task title, description, priority, and estimated hours. Implement form validation using React Hook Form. Connect the form to the updateTask API function. Add loading states and error handling. Style the component using Tailwind CSS and shadcn/ui.",
+        "testStrategy": "Test editing various task fields and verify that changes are saved correctly. Test validation with invalid inputs. Test loading states and error handling.",
+        "priority": "medium",
+        "dependencies": [
+          13,
+          16
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 22,
+        "title": "Implement Task Deletion UI",
+        "description": "Create UI for deleting tasks",
+        "details": "Add a delete button to the TaskCard component. Create a confirmation dialog using shadcn/ui. Connect the delete button to the deleteTask API function. Add loading states and error handling. Implement optimistic updates for better user experience.",
+        "testStrategy": "Test deleting tasks and verify they are removed from the UI and database. Test canceling deletion. Test loading states and error handling.",
+        "priority": "medium",
+        "dependencies": [
+          13,
+          17
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 23,
+        "title": "Implement Authentication UI",
+        "description": "Create login and signup forms for user authentication",
+        "details": "Create AuthForm component with tabs for login and signup. Implement form validation using React Hook Form. Connect the forms to Supabase Auth. Add social login buttons for Google OAuth. Handle authentication errors with user-friendly messages. Add loading states and redirects after successful authentication. Style the component using Tailwind CSS and shadcn/ui.",
+        "testStrategy": "Test login and signup with valid and invalid credentials. Test social login. Verify error messages for various authentication failures. Test redirects after successful authentication.",
+        "priority": "high",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 24,
+        "title": "Implement Authentication State Management",
+        "description": "Create a system for managing authentication state across the application",
+        "details": "Create an AuthProvider component that manages authentication state using React Context or Zustand. Implement hooks for accessing the current user, checking authentication status, and handling logout. Connect the provider to Supabase Auth events. Handle session expiration and renewal. Persist authentication state across page refreshes.",
+        "testStrategy": "Test authentication state across page refreshes. Verify that protected routes redirect unauthenticated users. Test session expiration and renewal.",
+        "priority": "high",
+        "dependencies": [
+          3,
+          9,
+          23
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 25,
+        "title": "Implement Protected Routes",
+        "description": "Create a system for protecting routes that require authentication",
+        "details": "Create a ProtectedRoute component that checks authentication status and redirects unauthenticated users to the login page. Implement route configuration using React Router. Add a public home page with information about the application. Create a dashboard route that requires authentication.",
+        "testStrategy": "Test accessing protected routes as authenticated and unauthenticated users. Verify redirects to login page. Test that authentication state persists across page refreshes.",
+        "priority": "high",
+        "dependencies": [
+          24
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 26,
+        "title": "Implement User Profile UI",
+        "description": "Create a page for viewing and editing user profile information",
+        "details": "Create a UserProfile component that displays user information (email, name) and allows editing. Implement form validation using React Hook Form. Connect the form to Supabase Auth for updating user information. Add functionality for changing password. Style the component using Tailwind CSS and shadcn/ui.",
+        "testStrategy": "Test viewing and editing user information. Verify that changes are saved correctly. Test password changes. Test validation with invalid inputs.",
+        "priority": "low",
+        "dependencies": [
+          24
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 27,
+        "title": "Implement Project Creation API",
+        "description": "Create API functions for creating projects in Supabase",
+        "details": "In src/services/projects.ts, implement createProject function that saves project data to Supabase. Handle validation and error cases. Ensure projects are associated with the current user. Use TypeScript for type safety.",
+        "testStrategy": "Test creating projects with valid and invalid data. Verify that projects are saved correctly in the database. Test error handling with network failures.",
+        "priority": "high",
+        "dependencies": [
+          3,
+          6,
+          7,
+          24
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 28,
+        "title": "Implement Project Retrieval API",
+        "description": "Create API functions for fetching projects from Supabase",
+        "details": "In src/services/projects.ts, implement getProjects function that fetches projects from Supabase. Filter projects by the current user. Implement sorting options. Add pagination for large result sets. Use TypeScript for type safety.",
+        "testStrategy": "Test fetching projects for different users. Verify that only the current user's projects are returned. Test sorting and pagination.",
+        "priority": "high",
+        "dependencies": [
+          3,
+          6,
+          7,
+          24
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 29,
+        "title": "Implement Project Update API",
+        "description": "Create API functions for updating projects in Supabase",
+        "details": "In src/services/projects.ts, implement updateProject function that updates project data in Supabase. Handle validation and error cases. Use TypeScript for type safety. Add optimistic updates for better user experience.",
+        "testStrategy": "Test updating project information. Verify that changes are saved correctly in the database. Test error handling with invalid data and network failures.",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          6,
+          7,
+          24
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 30,
+        "title": "Implement Project Deletion API",
+        "description": "Create API functions for deleting projects from Supabase",
+        "details": "In src/services/projects.ts, implement deleteProject function that removes projects and associated tasks from Supabase. Use cascading deletes to ensure all related data is removed. Add confirmation for deletion. Implement proper error handling. Use TypeScript for type safety.",
+        "testStrategy": "Test deleting projects and verify that the project and associated tasks are removed from the database. Test error handling with invalid IDs and network failures.",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          6,
+          7,
+          24
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 31,
+        "title": "Implement Project List UI",
+        "description": "Create a component for displaying and selecting projects",
+        "details": "Create a ProjectList component that displays a list of projects in the sidebar. Implement project selection functionality. Add visual indication for the currently selected project. Style the component using Tailwind CSS and shadcn/ui. Add empty state handling for when no projects exist.",
+        "testStrategy": "Test displaying projects and selecting a project. Verify that the selected project is highlighted. Test empty state handling.",
+        "priority": "high",
+        "dependencies": [
+          28
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 32,
+        "title": "Implement Project Creation UI",
+        "description": "Create UI for creating new projects",
+        "details": "Create a NewProjectButton component that opens a modal for creating a new project. Implement form validation using React Hook Form. Connect the form to the createProject API function. Add loading states and error handling. Style the component using Tailwind CSS and shadcn/ui.",
+        "testStrategy": "Test creating projects with valid and invalid data. Verify that new projects appear in the project list. Test loading states and error handling.",
+        "priority": "high",
+        "dependencies": [
+          27,
+          31
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 33,
+        "title": "Implement Project Editing UI",
+        "description": "Create UI for editing project details",
+        "details": "Create a ProjectEditForm component that allows editing of project name and description. Implement form validation using React Hook Form. Connect the form to the updateProject API function. Add loading states and error handling. Style the component using Tailwind CSS and shadcn/ui.",
+        "testStrategy": "Test editing project information. Verify that changes are saved correctly. Test validation with invalid inputs. Test loading states and error handling.",
+        "priority": "medium",
+        "dependencies": [
+          29,
+          31
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 34,
+        "title": "Implement Project Deletion UI",
+        "description": "Create UI for deleting projects",
+        "details": "Add a delete button to the project settings or context menu. Create a confirmation dialog using shadcn/ui. Connect the delete button to the deleteProject API function. Add loading states and error handling. Implement optimistic updates for better user experience.",
+        "testStrategy": "Test deleting projects and verify they are removed from the UI and database. Test that associated tasks are also removed. Test canceling deletion. Test loading states and error handling.",
+        "priority": "medium",
+        "dependencies": [
+          30,
+          31
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 35,
+        "title": "Implement Project Selection and Task Filtering",
+        "description": "Connect project selection to task filtering",
+        "details": "Modify the task retrieval logic to filter tasks by the currently selected project. Update the KanbanBoard and TaskList components to show only tasks for the selected project. Handle project switching by updating the task list. Add loading states during project switches.",
+        "testStrategy": "Test switching between projects and verify that the correct tasks are displayed. Test loading states during project switches.",
+        "priority": "high",
+        "dependencies": [
+          15,
+          31
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 36,
+        "title": "Implement AI Assistant Chat UI",
+        "description": "Create the UI for the AI Assistant chat interface",
+        "details": "Create a ChatInterface component with a message list and input form. Style messages differently for user and AI. Implement auto-scrolling to the latest message. Add loading indicators for AI responses. Style the component using Tailwind CSS with a glassmorphic design. Ensure the component is responsive and accessible.",
+        "testStrategy": "Test sending messages and receiving responses. Verify auto-scrolling behavior. Test on different screen sizes. Check accessibility for keyboard users and screen readers.",
+        "priority": "medium",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 37,
+        "title": "Implement Conversation Persistence API",
+        "description": "Create API functions for saving and retrieving chat conversations",
+        "details": "In src/services/conversations.ts, implement saveMessage function that saves user messages and AI responses to Supabase. Implement getConversation function that retrieves conversation history for a project. Use TypeScript for type safety. Ensure conversations are associated with the correct project.",
+        "testStrategy": "Test saving messages and retrieving conversation history. Verify that messages are associated with the correct project. Test error handling with network failures.",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 38,
+        "title": "Implement AI Assistant Chat Logic",
+        "description": "Create the logic for processing user messages and generating AI responses",
+        "details": "Create a service for handling AI Assistant interactions. Implement a function that takes user messages, retrieves context about existing tasks, sends a prompt to the Gemini API, and processes the response. Add logic for extracting actions from AI responses (add, modify, or remove tasks). Implement retry logic and error handling.",
+        "testStrategy": "Test with various user messages. Verify that context about existing tasks is correctly included in prompts. Test action extraction from AI responses. Test error handling with API failures.",
+        "priority": "medium",
+        "dependencies": [
+          4,
+          5,
+          15
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 39,
+        "title": "Connect AI Assistant to Task Management",
+        "description": "Integrate the AI Assistant with task CRUD operations",
+        "details": "Modify the AI Assistant service to execute actions on tasks based on AI responses. Implement functions for adding new tasks, modifying existing tasks, and removing tasks. Connect these functions to the appropriate API calls. Add validation and error handling. Update the UI to reflect changes made by the AI Assistant.",
+        "testStrategy": "Test end-to-end flows from user messages to task changes. Verify that tasks are correctly added, modified, or removed based on AI suggestions. Test error handling and validation.",
+        "priority": "medium",
+        "dependencies": [
+          14,
+          16,
+          17,
+          38
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 40,
+        "title": "Implement Suggested Prompts for AI Assistant",
+        "description": "Add pre-defined prompt suggestions to the AI Assistant interface",
+        "details": "Create a list of suggested prompts (e.g., \"Make tasks more detailed\", \"Add testing tasks\") that users can click to quickly send to the AI Assistant. Implement a SuggestedPrompts component that displays these prompts as clickable buttons. Connect the buttons to the chat input. Style the component using Tailwind CSS and shadcn/ui.",
+        "testStrategy": "Test clicking suggested prompts and verify they are sent to the AI Assistant. Test that the AI responds appropriately to these prompts.",
+        "priority": "low",
+        "dependencies": [
+          36,
+          38
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 41,
+        "title": "Implement Loading Skeletons",
+        "description": "Add loading skeleton components for async operations",
+        "details": "Create skeleton components for TaskList, KanbanBoard, ProjectList, and other components that load data asynchronously. Use Tailwind CSS for styling with pulse animations. Implement conditional rendering based on loading state. Ensure skeletons match the layout of the actual components to prevent layout shifts.",
+        "testStrategy": "Test loading states for all components. Verify that skeletons are displayed during loading and replaced with actual content when data is available. Check for layout shifts during transitions.",
+        "priority": "low",
+        "dependencies": [
+          11,
+          12,
+          31,
+          36
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 42,
+        "title": "Implement Error Boundaries",
+        "description": "Add error boundaries to prevent UI crashes",
+        "details": "Create an ErrorBoundary component using React's error boundary feature. Implement fallback UI for different types of errors. Add error reporting functionality (console logging, potentially a service like Sentry in the future). Place error boundaries strategically around key components.",
+        "testStrategy": "Test error boundaries by intentionally causing errors in components. Verify that the fallback UI is displayed and the rest of the application continues to function.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 43,
+        "title": "Implement Empty States",
+        "description": "Add empty state components for when no data exists",
+        "details": "Create empty state components for TaskList (no tasks), ProjectList (no projects), and other components that display data. Include helpful messages and actions (e.g., \"Create your first project\"). Style the components using Tailwind CSS and shadcn/ui. Ensure empty states are visually appealing and guide users to the next action.",
+        "testStrategy": "Test empty states by clearing data. Verify that empty states are displayed correctly and that action buttons work as expected.",
+        "priority": "low",
+        "dependencies": [
+          11,
+          31,
+          36
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 44,
+        "title": "Implement Toast Notifications",
+        "description": "Add a system for displaying toast notifications",
+        "details": "Implement a toast notification system using shadcn/ui Toast component. Create a useToast hook for displaying notifications from anywhere in the application. Add different types of notifications (success, error, info). Implement automatic dismissal and manual close buttons. Ensure notifications are accessible.",
+        "testStrategy": "Test displaying different types of notifications. Verify automatic dismissal and manual closing. Check accessibility for screen readers.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 45,
+        "title": "Implement Responsive Design Adjustments",
+        "description": "Ensure the application works well on all screen sizes",
+        "details": "Review all components for responsive behavior. Implement specific layouts for mobile devices. Add a responsive sidebar that collapses on small screens. Ensure the Kanban board works well on mobile with horizontal scrolling. Test and adjust all forms and modals for mobile devices. Use Tailwind CSS breakpoints consistently.",
+        "testStrategy": "Test the application on various screen sizes and devices. Verify that all components are usable on mobile devices. Check for layout issues and overflow problems.",
+        "priority": "medium",
+        "dependencies": [
+          11,
+          12,
+          31,
+          36
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 46,
+        "title": "Implement Keyboard Accessibility",
+        "description": "Ensure the application is fully accessible via keyboard",
+        "details": "Review all interactive components for keyboard accessibility. Implement proper focus management for modals and dialogs. Add keyboard shortcuts for common actions. Ensure drag-and-drop functionality has keyboard alternatives. Add proper ARIA attributes for screen readers. Test with keyboard navigation and screen readers.",
+        "testStrategy": "Test navigating the entire application using only the keyboard. Verify that all interactive elements are focusable and operable. Test with screen readers to ensure proper announcements.",
+        "priority": "medium",
+        "dependencies": [
+          11,
+          12,
+          23,
+          31,
+          36
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 47,
+        "title": "Write Unit Tests for Utility Functions",
+        "description": "Create unit tests for core utility functions",
+        "details": "Set up a testing framework (Jest or Vitest). Write unit tests for validation functions, API service functions, and other utility functions. Implement mocks for external dependencies like Supabase and Gemini API. Aim for high test coverage of critical functionality. Set up a test runner in package.json.",
+        "testStrategy": "Run tests and verify that they pass. Check test coverage reports. Ensure tests are meaningful and test edge cases.",
+        "priority": "medium",
+        "dependencies": [
+          4,
+          5,
+          14,
+          15,
+          16,
+          17,
+          27,
+          28,
+          29,
+          30,
+          37,
+          38
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 48,
+        "title": "Setup Deployment Configuration",
+        "description": "Configure the application for production deployment",
+        "details": "Set up environment-specific configuration for development, staging, and production. Configure build scripts in package.json. Set up CI/CD with GitHub Actions for automated testing and deployment. Prepare deployment to Vercel or Netlify. Configure production Supabase environment. Add analytics integration (Vercel Analytics or Plausible). Create a README with setup instructions and a demo video.",
+        "testStrategy": "Test the build process and verify that the application works correctly in a production environment. Test CI/CD pipelines. Verify that analytics are working correctly.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          3,
+          4,
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-10-08T12:04:39.808Z",
+      "updated": "2025-10-08T12:49:52.555Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
