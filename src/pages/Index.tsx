@@ -87,26 +87,30 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex animate-fade-in">
       <AppSidebar />
       
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Header */}
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
+          <div className="space-y-2 animate-fade-in">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-primary-glow to-secondary bg-clip-text text-transparent animate-shimmer bg-[length:200%_auto]">
               Freelancer AI Task Manager
             </h1>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground text-lg animate-fade-in" style={{ animationDelay: "0.1s" }}>
               Let AI transform your ideas into organized tasks
             </p>
           </div>
 
           {/* Task Input */}
-          <TaskInput onGenerate={handleGenerateTasks} />
+          <div style={{ animationDelay: "0.2s" }}>
+            <TaskInput onGenerate={handleGenerateTasks} />
+          </div>
 
           {/* Kanban Board */}
-          <KanbanBoard tasks={tasks} onTaskMove={handleTaskMove} />
+          <div style={{ animationDelay: "0.3s" }}>
+            <KanbanBoard tasks={tasks} onTaskMove={handleTaskMove} />
+          </div>
         </div>
       </main>
     </div>

@@ -75,30 +75,93 @@ All colors MUST be HSL.
     background: linear-gradient(to bottom, hsl(240 20% 6%), hsl(240 25% 10%));
   }
   
-  /* Glassmorphism utilities */
+  /* 3D Glassmorphism utilities */
   .glass {
     background: hsl(var(--card-glass) / 0.4);
     backdrop-filter: blur(12px);
     border: 1px solid hsl(var(--border) / 0.5);
+    box-shadow: 
+      0 8px 32px hsl(240 20% 3% / 0.4),
+      inset 0 1px 1px hsl(var(--foreground) / 0.05);
   }
   
   .glass-strong {
     background: hsl(var(--card-glass) / 0.6);
     backdrop-filter: blur(16px);
     border: 1px solid hsl(var(--border) / 0.6);
+    box-shadow: 
+      0 12px 40px hsl(240 20% 3% / 0.5),
+      inset 0 1px 2px hsl(var(--foreground) / 0.08);
   }
   
-  /* Glow effects */
+  .glass-3d {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--card-glass) / 0.5) 0%,
+      hsl(var(--card-glass) / 0.3) 100%
+    );
+    backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--border) / 0.6);
+    box-shadow: 
+      0 20px 60px hsl(240 20% 3% / 0.6),
+      inset 0 1px 2px hsl(var(--foreground) / 0.1),
+      0 0 40px hsl(var(--primary) / 0.1);
+    transform-style: preserve-3d;
+  }
+  
+  /* Advanced Glow effects */
   .glow {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+    box-shadow: 
+      0 0 20px hsl(var(--primary) / 0.3),
+      0 0 40px hsl(var(--primary) / 0.15);
+  }
+  
+  .glow-strong {
+    box-shadow: 
+      0 0 30px hsl(var(--primary) / 0.5),
+      0 0 60px hsl(var(--primary) / 0.25),
+      0 0 100px hsl(var(--primary) / 0.1);
   }
   
   .glow-hover {
-    transition: box-shadow 0.3s ease;
+    transition: box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .glow-hover:hover {
-    box-shadow: 0 0 30px hsl(var(--primary) / 0.5);
+    box-shadow: 
+      0 0 30px hsl(var(--primary) / 0.5),
+      0 0 60px hsl(var(--primary) / 0.3),
+      0 10px 40px hsl(240 20% 3% / 0.4);
+    transform: translateY(-2px);
+  }
+  
+  /* 3D Depth shadows */
+  .shadow-3d {
+    box-shadow: 
+      0 10px 30px hsl(240 20% 3% / 0.5),
+      0 4px 8px hsl(240 20% 3% / 0.3);
+  }
+  
+  .shadow-3d-strong {
+    box-shadow: 
+      0 20px 60px hsl(240 20% 3% / 0.6),
+      0 8px 16px hsl(240 20% 3% / 0.4),
+      inset 0 1px 2px hsl(var(--foreground) / 0.1);
+  }
+  
+  /* Floating animation utility */
+  .floating {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  /* Parallax container */
+  .parallax-container {
+    perspective: 1000px;
+    transform-style: preserve-3d;
+  }
+  
+  .parallax-item {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 

@@ -39,18 +39,19 @@ export function KanbanBoard({ tasks, onTaskMove }: KanbanBoardProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
-      {columns.map((column) => (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in parallax-container">
+      {columns.map((column, index) => (
         <div
           key={column.id}
           onDragOver={handleDragOver}
           onDrop={() => handleDrop(column.id)}
-          className="glass rounded-xl p-4 min-h-[500px] space-y-4"
+          className="glass-3d rounded-xl p-4 min-h-[500px] space-y-4 shadow-3d-strong glow-hover parallax-item animate-float-slow"
+          style={{ animationDelay: `${index * 0.2}s` }}
         >
           <div className="flex items-center gap-2 mb-4">
-            <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${column.color}`} />
-            <h3 className="font-semibold text-lg">{column.title}</h3>
-            <span className="ml-auto text-sm text-muted-foreground">
+            <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${column.color} glow animate-glow-pulse`} />
+            <h3 className="font-semibold text-lg bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text">{column.title}</h3>
+            <span className="ml-auto text-sm text-muted-foreground glass px-2 py-1 rounded-full">
               {tasks.filter((t) => t.status === column.id).length}
             </span>
           </div>
@@ -58,12 +59,17 @@ export function KanbanBoard({ tasks, onTaskMove }: KanbanBoardProps) {
           <div className="space-y-3">
             {tasks
               .filter((task) => task.status === column.id)
-              .map((task) => (
-                <TaskCard
+              .map((task, taskIndex) => (
+                <div
                   key={task.id}
-                  task={task}
-                  onDragStart={() => handleDragStart(task.id)}
-                />
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${taskIndex * 0.1}s` }}
+                >
+                  <TaskCard
+                    task={task}
+                    onDragStart={() => handleDragStart(task.id)}
+                  />
+                </div>
               ))}
           </div>
         </div>

@@ -83,19 +83,21 @@ export default {
         "glow-pulse": {
           "0%, 100%": {
             opacity: "1",
-            boxShadow: "0 0 20px hsl(var(--primary) / 0.3)",
+            boxShadow: "0 0 20px hsl(var(--primary) / 0.3), 0 0 40px hsl(var(--primary) / 0.15)",
           },
           "50%": {
-            opacity: "0.8",
-            boxShadow: "0 0 30px hsl(var(--primary) / 0.5)",
+            opacity: "0.9",
+            boxShadow: "0 0 30px hsl(var(--primary) / 0.5), 0 0 60px hsl(var(--primary) / 0.25)",
           },
         },
         "slide-in": {
           "0%": {
             transform: "translateX(-100%)",
+            opacity: "0",
           },
           "100%": {
             transform: "translateX(0)",
+            opacity: "1",
           },
         },
         "fade-in": {
@@ -108,6 +110,41 @@ export default {
             transform: "translateY(0)",
           },
         },
+        "float": {
+          "0%, 100%": {
+            transform: "translateY(0px)",
+          },
+          "50%": {
+            transform: "translateY(-10px)",
+          },
+        },
+        "float-slow": {
+          "0%, 100%": {
+            transform: "translateY(0px) translateX(0px)",
+          },
+          "25%": {
+            transform: "translateY(-5px) translateX(3px)",
+          },
+          "75%": {
+            transform: "translateY(5px) translateX(-3px)",
+          },
+        },
+        "shimmer": {
+          "0%": {
+            backgroundPosition: "-1000px 0",
+          },
+          "100%": {
+            backgroundPosition: "1000px 0",
+          },
+        },
+        "icon-bounce": {
+          "0%, 100%": {
+            transform: "scale(1)",
+          },
+          "50%": {
+            transform: "scale(1.1)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -115,6 +152,10 @@ export default {
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
         "slide-in": "slide-in 0.3s ease-out",
         "fade-in": "fade-in 0.5s ease-out",
+        "float": "float 6s ease-in-out infinite",
+        "float-slow": "float-slow 8s ease-in-out infinite",
+        "shimmer": "shimmer 3s linear infinite",
+        "icon-bounce": "icon-bounce 0.3s ease-in-out",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
