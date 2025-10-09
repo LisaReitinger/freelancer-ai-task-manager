@@ -1,44 +1,75 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TaskInput } from "@/components/TaskInput";
 import { KanbanBoard, Task } from "@/components/KanbanBoard";
 import { useToast } from "@/hooks/use-toast";
 import { generateTasks } from "@/services/gemini";
+import { signInAnonymously } from "@/lib/supabase";
+import { createProject, getProjects } from "@/services/projects";
+import { getTasks, createTasks, updateTaskStatus } from "@/services/tasks";
 
 const Index = () => {
   const { toast } = useToast();
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: "1",
-      title: "Design landing page",
-      description: "Create wireframes and mockups for the new landing page",
-      status: "in-progress",
-      priority: "high",
-    },
-    {
-      id: "2",
-      title: "Set up database",
-      description: "Configure PostgreSQL and create initial schema",
-      status: "todo",
-      priority: "high",
-    },
-    {
-      id: "3",
-      title: "Write documentation",
-      description: "Document API endpoints and usage examples",
-      status: "todo",
-      priority: "medium",
-    },
-    {
-      id: "4",
-      title: "Deploy to production",
-      description: "Configure CI/CD pipeline and deploy app",
-      status: "done",
-      priority: "low",
-    },
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Initialize: Sign in anonymously and get/create project
+  useEffect(() => {
+    initializeApp();
+  }, []);
+
+  async function initializeApp() {
+    try {
+      // Sign in anonymously for demo mode
+      await signInAnonymously();
+      
+      // Check if user has a project, or create one
+      const projects = await getProjects();
+      
+      let currentProject;
+      if (projects.length === 0) {
+        // Create default project
+        currentProject = await createProject(
+          "My Tasks",
+          "Demo project for AI task generation"
+        );
+        toast({
+          title: "Welcome! 👋",
+          description: "Your demo project has been created",
+        });
+      } else {
+        currentProject = projects[0];
+      }
+      
+      setProjectId(currentProject.id);
+      
+      // Load tasks for this project
+      const loadedTasks = await getTasks(currentProject.id);
+      setTasks(loadedTasks);
+      
+    } catch (error) {
+      console.error("Initialization error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to initialize app. Check console for details.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleGenerateTasks = async (projectIdea: string) => {
+    if (!projectId) {
+      toast({
+        title: "Error",
+        description: "No project found. Please refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "AI is thinking...",
       description: "Generating tasks from your project idea",
@@ -48,20 +79,26 @@ const Index = () => {
       // Call Gemini AI to generate tasks
       const aiTasks = await generateTasks(projectIdea);
       
-      // Convert AI response to our Task format
-      const newTasks: Task[] = aiTasks.map((aiTask, index) => ({
-        id: `${Date.now()}-${index}`,
+      // Convert AI response to Task format for database
+      const newTasksForDb = aiTasks.map((aiTask, index) => ({
+        project_id: projectId,
         title: aiTask.title,
         description: aiTask.description,
         status: "todo" as const,
         priority: aiTask.priority,
+        order: tasks.length + index,
+        estimated_hours: aiTask.estimated_hours || null,
       }));
 
-      setTasks([...tasks, ...newTasks]);
+      // Save to database
+      const savedTasks = await createTasks(newTasksForDb);
+      
+      // Update local state
+      setTasks([...tasks, ...savedTasks]);
       
       toast({
         title: "Tasks generated!",
-        description: `Created ${newTasks.length} new tasks for your project`,
+        description: `Created ${savedTasks.length} new tasks for your project`,
       });
     } catch (error) {
       toast({
@@ -73,13 +110,37 @@ const Index = () => {
     }
   };
 
-  const handleTaskMove = (taskId: string, newStatus: Task["status"]) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === taskId ? { ...task, status: newStatus } : task
-      )
-    );
+  const handleTaskMove = async (taskId: string, newStatus: Task["status"]) => {
+    try {
+      // Update in database
+      await updateTaskStatus(taskId, newStatus);
+      
+      // Update local state
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === taskId ? { ...task, status: newStatus } : task
+        )
+      );
+    } catch (error) {
+      console.error("Task move error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading your workspace...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex animate-fade-in">
