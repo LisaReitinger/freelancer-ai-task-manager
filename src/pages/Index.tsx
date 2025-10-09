@@ -4,7 +4,7 @@ import { TaskInput } from "@/components/TaskInput";
 import { KanbanBoard, Task } from "@/components/KanbanBoard";
 import { useToast } from "@/hooks/use-toast";
 import { generateTasks } from "@/services/gemini";
-import { signInAnonymously } from "@/lib/supabase";
+import { ensureAnonymousSession } from "@/lib/supabase";
 import { createProject, getProjects } from "@/services/projects";
 import { getTasks, createTasks, updateTaskStatus } from "@/services/tasks";
 
@@ -21,11 +21,15 @@ const Index = () => {
 
   async function initializeApp() {
     try {
-      // Sign in anonymously for demo mode
-      await signInAnonymously();
+      // Ensure we have an anonymous session (persists on refresh)
+      console.log('Ensuring anonymous session...');
+      await ensureAnonymousSession();
+      console.log('Session ready');
       
       // Check if user has a project, or create one
+      console.log('Fetching projects...');
       const projects = await getProjects();
+      console.log('Projects:', projects);
       
       let currentProject;
       if (projects.length === 0) {
@@ -43,9 +47,12 @@ const Index = () => {
       }
       
       setProjectId(currentProject.id);
+      console.log('Project ID set:', currentProject.id);
       
       // Load tasks for this project
+      console.log('Loading tasks...');
       const loadedTasks = await getTasks(currentProject.id);
+      console.log('Loaded tasks:', loadedTasks);
       setTasks(loadedTasks);
       
     } catch (error) {
