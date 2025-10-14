@@ -1,73 +1,291 @@
-# Welcome to your Lovable project
+# Freelancer AI Task Manager
 
-## Project info
+> Transform your project ideas into organized tasks with the power of AI
 
-**URL**: https://lovable.dev/projects/ab2bd74a-fbf0-4c0f-9a22-55fc4815f1db
+A modern, AI-powered task management application built for freelancers and solo developers. Describe your project in one sentence, and watch as AI breaks it down into actionable tasks with intelligent prioritization.
 
-## How can I edit this code?
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://your-demo-url.vercel.app)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18.3-61DAFB)](https://reactjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-enabled-3ECF8E)](https://supabase.com/)
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/ab2bd74a-fbf0-4c0f-9a22-55fc4815f1db) and start prompting.
+### **AI-Powered Task Generation**
+- Describe your project in natural language
+- Google Gemini AI generates structured, prioritized tasks
+- Intelligent task breakdown with estimated time and priority levels
 
-Changes made via Lovable will be committed automatically to this repo.
+### **Interactive Kanban Board**
+- Drag-and-drop task management (To-Do → In Progress → Done)
+- Real-time status updates
+- Visual priority indicators (High, Medium, Low)
+- Task count badges per column
 
-**Use your preferred IDE**
+### **Secure Authentication**
+- Email/password authentication
+- Google OAuth integration (one-click sign-in)
+- Protected routes with session persistence
+- Row-Level Security (RLS) for data privacy
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### **Persistent Data Storage**
+- Tasks saved to Supabase PostgreSQL
+- Real-time synchronization across devices
+- Auto-save on every change
+- No data loss on page refresh
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### **Modern UI/UX**
+- Glassmorphic design with gradient accents
+- Smooth animations and transitions
+- Fully responsive (mobile-friendly)
+- Dark mode optimized
+- Collapsible sidebar
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Tech Stack
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### **Frontend**
+- **React 18** - UI library
+- **TypeScript** - Type safety
+- **Vite** - Build tool and dev server
+- **TailwindCSS** - Utility-first styling
+- **shadcn/ui** - Beautiful component library
+- **React Query** - Server state management
+- **React Router** - Client-side routing
 
-# Step 3: Install the necessary dependencies.
-npm i
+### **Backend**
+- **Supabase** - Backend as a Service (BaaS)
+  - PostgreSQL database
+  - Authentication (Email + OAuth)
+  - Row-Level Security (RLS)
+  - Real-time subscriptions
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### **AI Integration**
+- **Google Gemini API** - AI task generation
+  - Model: `gemini-2.0-flash-exp`
+  - JSON schema validation with Zod
+  - Error handling with fallback tasks
+
+### **Developer Tools**
+- **ESLint** - Code linting
+- **Prettier** - Code formatting
+- **Git** - Version control
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+Before you begin, ensure you have:
+- **Node.js** (v18 or higher)
+- **npm** or **yarn**
+- **Supabase account** (free tier)
+- **Google AI Studio API key** (free)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/LisaReitinger/freelancer-ai-task-manager.git
+   cd freelancer-ai-task-manager
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_SUPABASE_URL=your-supabase-url-here
+   VITE_SUPABASE_ANON_KEY=your-supabase-anon-key-here
+   VITE_GEMINI_API_KEY=your-gemini-api-key-here
+   ```
+
+4. **Set up Supabase database**
+   
+   Run the SQL migrations in your Supabase dashboard:
+   - Go to SQL Editor
+   - Run `supabase/migrations/001_initial_schema.sql`
+   - Run `supabase/migrations/002_rls_policies.sql`
+
+5. **Enable authentication providers**
+   
+   In Supabase dashboard → Authentication → Providers:
+   - Enable **Email** authentication
+   - (Optional) Enable **Google OAuth**
+
+6. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+
+7. **Open your browser**
+   
+   Navigate to `http://localhost:8080`
+
+---
+
+## Environment Variables
+
+| Variable | Description | Where to Get |
+|----------|-------------|--------------|
+| `VITE_SUPABASE_URL` | Your Supabase project URL | Supabase Dashboard → Settings → API |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key | Supabase Dashboard → Settings → API |
+| `VITE_GEMINI_API_KEY` | Google Gemini API key | [Google AI Studio](https://aistudio.google.com/app/apikey) |
+
+---
+
+## Screenshots
+
+### Authentication Page
+![Auth Page](docs/screenshots/auth.png)
+*Modern sign-in/sign-up with Google OAuth integration*
+
+### AI Task Generation
+![Task Generation](docs/screenshots/task-generation.png)
+*Describe your project and let AI do the planning*
+
+### Kanban Board
+![Kanban Board](docs/screenshots/kanban.png)
+*Drag-and-drop task management with real-time updates*
+
+---
+
+## 🏗️ Project Structure
+
+```
+freelancer-ai-task-manager/
+├── src/
+│   ├── components/         # Reusable UI components
+│   │   ├── ui/            # shadcn/ui components
+│   │   ├── AppSidebar.tsx
+│   │   ├── KanbanBoard.tsx
+│   │   ├── TaskCard.tsx
+│   │   └── TaskInput.tsx
+│   ├── pages/             # Route pages
+│   │   ├── Index.tsx      # Main dashboard
+│   │   ├── Auth.tsx       # Login/signup
+│   │   └── NotFound.tsx
+│   ├── services/          # API services
+│   │   ├── gemini.ts      # AI task generation
+│   │   ├── projects.ts    # Project CRUD
+│   │   └── tasks.ts       # Task CRUD
+│   ├── lib/               # Utilities
+│   │   ├── supabase.ts    # Supabase client
+│   │   └── utils.ts       # Helper functions
+│   ├── types/             # TypeScript types
+│   │   └── index.ts
+│   └── App.tsx            # Root component
+├── supabase/
+│   └── migrations/        # Database migrations
+├── public/                # Static assets
+└── package.json
 ```
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## How It Works
 
-**Use GitHub Codespaces**
+### 1. **AI Task Generation Flow**
+```
+User Input → Gemini API → JSON Validation → Database → UI Update
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- User describes project (e.g., "Build a weather app")
+- Gemini API processes with structured prompt
+- Response validated against Zod schema
+- Tasks saved to Supabase with metadata
+- UI updates in real-time
 
-## What technologies are used for this project?
+### 2. **Authentication Flow**
+```
+Sign Up/In → Supabase Auth → JWT Token → Session Storage → Protected Routes
+```
 
-This project is built with:
+- Email/password or Google OAuth
+- JWT token stored in localStorage
+- Session persists across page refreshes
+- RLS policies ensure data privacy
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### 3. **Data Persistence**
+```
+Drag Task → Update Status → Supabase API → RLS Check → Database → Real-time Sync
+```
 
-## How can I deploy this project?
+- Every action auto-saves to database
+- Row-Level Security enforces user isolation
+- Real-time subscriptions keep UI in sync
 
-Simply open [Lovable](https://lovable.dev/projects/ab2bd74a-fbf0-4c0f-9a22-55fc4815f1db) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
+## Key Features Implemented
 
-Yes, you can!
+- ✅ AI-powered task generation with Google Gemini
+- ✅ User authentication (Email + Google OAuth)
+- ✅ Real-time Kanban board with drag-and-drop
+- ✅ Persistent data storage with Supabase
+- ✅ Row-Level Security for data privacy
+- ✅ Responsive design with Tailwind CSS
+- ✅ Error handling and loading states
+- ✅ Toast notifications for user feedback
+- ✅ Session persistence across refreshes
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Future Enhancements
+
+- [ ] **AI Assistant Chat** - Conversational interface to refine tasks
+- [ ] **Multi-project Support** - Manage multiple projects simultaneously
+- [ ] **Task Editing** - Inline edit task title, description, priority
+- [ ] **Bulk Operations** - Delete/move multiple tasks at once
+- [ ] **Time Tracking** - Track time spent on each task
+- [ ] **Team Collaboration** - Share projects with team members
+- [ ] **Mobile App** - React Native version
+- [ ] **n8n Integration** - Automation workflows
+- [ ] **Analytics Dashboard** - Productivity insights
+
+---
+
+## 📚 What I Learned
+
+This project was a great learning experience in:
+
+- **AI Integration**: Working with Google Gemini API for intelligent task generation
+- **Backend as a Service**: Leveraging Supabase for auth, database, and real-time features
+- **Type Safety**: Building a fully-typed React application with TypeScript
+- **Modern React Patterns**: Hooks, custom hooks, component composition
+- **State Management**: React Query for server state, local state for UI
+- **Authentication**: Implementing secure auth with session persistence
+- **Database Design**: PostgreSQL schema design with RLS policies
+- **Responsive Design**: Mobile-first approach with Tailwind CSS
+
+---
+
+## License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+---
+
+## 👤 Author
+
+**Your Name**
+
+- GitHub: [@LisaReitinger](https://github.com/LisaReitinger)
+- LinkedIn: [Lisa Reitinger](https://www.linkedin.com/in/lisareitinger/)
+
+---
+
+## Acknowledgments
+
+- [shadcn/ui](https://ui.shadcn.com/) - Beautiful component library
+- [Supabase](https://supabase.com/) - Backend infrastructure
+- [Google AI](https://ai.google.dev/) - Gemini API for task generation
+- [Lovable](https://lovable.dev/) - Initial UI design inspiration
