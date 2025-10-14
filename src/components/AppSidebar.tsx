@@ -1,7 +1,10 @@
-import { LayoutDashboard, Sparkles, Settings, ChevronLeft, ChevronRight } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { LayoutDashboard, Sparkles, Settings, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const navItems = [
   { title: "Projects", icon: LayoutDashboard, url: "/" },
@@ -10,7 +13,26 @@ const navItems = [
 ];
 
 export function AppSidebar() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [collapsed, setCollapsed] = useState(false);
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Signed out",
+        description: "You've been successfully signed out.",
+      });
+      navigate('/auth');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <aside
@@ -75,16 +97,28 @@ export function AppSidebar() {
       </nav>
 
       {/* Footer */}
-      {!collapsed && (
-        <div className="p-4 border-t border-border/50">
+      <div className="p-4 border-t border-border/50 space-y-3">
+        {!collapsed && (
           <div className="glass rounded-lg p-3">
             <p className="text-xs text-muted-foreground">
               AI-powered task management
             </p>
             <p className="text-xs text-primary mt-1">Beta v1.0</p>
           </div>
-        </div>
-      )}
+        )}
+        
+        <Button
+          onClick={handleSignOut}
+          variant="outline"
+          className={cn(
+            "w-full h-10 border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50",
+            collapsed ? "p-2" : ""
+          )}
+        >
+          <LogOut className="w-4 h-4" />
+          {!collapsed && <span className="ml-2">Sign Out</span>}
+        </Button>
+      </div>
     </aside>
   );
 }

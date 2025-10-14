@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TaskInput } from "@/components/TaskInput";
 import { KanbanBoard, Task } from "@/components/KanbanBoard";
 import { useToast } from "@/hooks/use-toast";
 import { generateTasks } from "@/services/gemini";
-import { ensureAnonymousSession } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { createProject, getProjects } from "@/services/projects";
 import { getTasks, createTasks, updateTaskStatus } from "@/services/tasks";
 
 const Index = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projectId, setProjectId] = useState<string | null>(null);
@@ -21,10 +23,14 @@ const Index = () => {
 
   async function initializeApp() {
     try {
-      // Ensure we have an anonymous session (persists on refresh)
-      console.log('Ensuring anonymous session...');
-      await ensureAnonymousSession();
-      console.log('Session ready');
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // Not authenticated, redirect to auth page
+        navigate('/auth');
+        return;
+      }
       
       // Check if user has a project, or create one
       console.log('Fetching projects...');
