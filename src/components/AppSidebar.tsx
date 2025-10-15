@@ -1,4 +1,4 @@
-import { LayoutDashboard, Sparkles, Settings, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import { LayoutDashboard, Sparkles, Settings, ChevronLeft, ChevronRight, LogOut, FolderOpen } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getProjects } from "@/services/projects";
 import { Project } from "@/types";
+import { useProjectStore } from "@/store/projectStore";
 
 const navItems = [
   { title: "Projects", icon: LayoutDashboard, url: "/" },
@@ -22,6 +23,10 @@ export function AppSidebar() {
   // STATE: Store projects and loading state
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
+  
+  // ZUSTAND: Get selected project and the function to update it
+  const selectedProject = useProjectStore((state) => state.selectedProject);
+  const setSelectedProject = useProjectStore((state) => state.setSelectedProject);
   
   // FUNCTION: Fetch projects from Supabase
   async function fetchProjects() {
@@ -46,6 +51,15 @@ export function AppSidebar() {
     fetchProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  
+  // FUNCTION: Handle project selection
+  function handleProjectClick(project: Project) {
+    setSelectedProject(project);
+    toast({
+      title: "Project selected",
+      description: `Now viewing: ${project.name}`,
+    });
+  }
 
   const handleSignOut = async () => {
     try {
@@ -98,7 +112,7 @@ export function AppSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="p-4 space-y-2 border-b border-border/50">
         {navItems.map((item, index) => (
           <NavLink
             key={item.url}
@@ -131,6 +145,118 @@ export function AppSidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* Projects List Section */}
+      <div className="flex-1 p-4 overflow-y-auto">
+        {!collapsed && (
+          <div className="space-y-3">
+            <div className="px-2 pt-2">
+              <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Your Projects
+              </h2>
+              <div className="h-px bg-gradient-to-r from-primary/50 to-transparent mt-2" />
+            </div>
+            
+            {/* Loading State */}
+            {loadingProjects && (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-10 rounded-lg bg-muted/20 animate-pulse" />
+                ))}
+              </div>
+            )}
+            
+            {/* Empty State */}
+            {!loadingProjects && projects.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                <FolderOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p>No projects yet</p>
+                <p className="text-xs mt-1">Create one to get started!</p>
+              </div>
+            )}
+            
+            {/* Project List */}
+            {!loadingProjects && projects.length > 0 && (
+              <div className="space-y-1 px-1">
+                {projects.map((project) => (
+                  <button
+                    key={project.id}
+                    onClick={() => handleProjectClick(project)}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-md transition-all duration-200",
+                      "hover:bg-muted/30 group relative",
+                      "border border-transparent",
+                      selectedProject?.id === project.id 
+                        ? "bg-primary/5 border-primary/30 shadow-sm" 
+                        : "hover:border-border/30"
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className={cn(
+                        "w-1.5 h-1.5 rounded-full transition-all duration-200",
+                        selectedProject?.id === project.id 
+                          ? "bg-primary scale-125" 
+                          : "bg-muted-foreground/30 group-hover:bg-primary/50"
+                      )} />
+                      <FolderOpen className={cn(
+                        "w-3.5 h-3.5 flex-shrink-0 transition-all duration-200",
+                        selectedProject?.id === project.id 
+                          ? "text-primary" 
+                          : "text-muted-foreground/60 group-hover:text-primary/70"
+                      )} />
+                      <span className={cn(
+                        "font-medium text-sm truncate transition-colors duration-200",
+                        selectedProject?.id === project.id 
+                          ? "text-primary" 
+                          : "text-foreground group-hover:text-primary/90"
+                      )}>
+                        {project.name}
+                      </span>
+                    </div>
+                    {project.description && (
+                      <p className="text-xs text-muted-foreground/70 mt-1 truncate ml-7">
+                        {project.description}
+                      </p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Collapsed State - Show only icons */}
+        {collapsed && !loadingProjects && projects.length > 0 && (
+          <div className="space-y-1.5">
+            {projects.map((project) => (
+              <button
+                key={project.id}
+                onClick={() => handleProjectClick(project)}
+                className={cn(
+                  "w-full p-2 rounded-md transition-all duration-200",
+                  "hover:bg-muted/30 relative group",
+                  "border border-transparent",
+                  selectedProject?.id === project.id 
+                    ? "bg-primary/5 border-primary/30" 
+                    : "hover:border-border/30"
+                )}
+                title={project.name}
+              >
+                <div className={cn(
+                  "absolute left-1 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full",
+                  selectedProject?.id === project.id ? "bg-primary" : "bg-transparent"
+                )} />
+                <FolderOpen className={cn(
+                  "w-4 h-4 mx-auto transition-colors duration-200",
+                  selectedProject?.id === project.id 
+                    ? "text-primary" 
+                    : "text-muted-foreground/60 group-hover:text-primary/70"
+                )} />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Footer */}
       <div className="p-4 border-t border-border/50 space-y-3">
