@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
+import { ProjectCreationForm } from "@/components/ProjectCreationForm";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * PROJECTS PAGE
@@ -7,14 +10,49 @@ import { AppSidebar } from "@/components/AppSidebar";
  * This page is focused entirely on creating NEW projects using AI.
  * Users will enter a project name and description, then AI generates tasks.
  * 
- * What will be added later:
- * - Project name input field
- * - AI description textarea
- * - "+ New Project" button
- * - Loading states during AI generation
+ * Features:
+ * ✅ Project name input field
+ * ✅ AI description textarea
+ * ✅ Loading states during AI generation
+ * 
+ * What will be connected in Task 3:
+ * - Supabase project creation
+ * - Gemini AI task generation
+ * - Task persistence to database
  */
 
 const Projects = () => {
+  const { toast } = useToast();
+  const [isCreating, setIsCreating] = useState(false);
+
+  // Handler for form submission (Task 3 will implement the actual logic)
+  const handleCreateProject = async (projectName: string, projectDescription: string) => {
+    setIsCreating(true);
+    
+    try {
+      // TODO (Task 3): Implement actual project creation logic
+      // 1. Create project in Supabase
+      // 2. Call Gemini AI to generate tasks
+      // 3. Save generated tasks linked to project
+      
+      console.log("Creating project:", { projectName, projectDescription });
+      
+      // Temporary success message
+      toast({
+        title: "Coming soon!",
+        description: "Project creation will be implemented in Task 3",
+      });
+    } catch (error) {
+      console.error("Error creating project:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create project",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
   return (
     <div className="min-h-screen flex animate-fade-in">
       <AppSidebar />
@@ -31,12 +69,11 @@ const Projects = () => {
             </p>
           </div>
 
-          {/* Placeholder for Project Creation Form */}
-          <div className="glass rounded-2xl p-8 border border-border/50">
-            <p className="text-muted-foreground text-center py-12">
-              Project creation form coming soon...
-            </p>
-          </div>
+          {/* Project Creation Form */}
+          <ProjectCreationForm 
+            onCreateProject={handleCreateProject}
+            isLoading={isCreating}
+          />
         </div>
       </main>
     </div>
