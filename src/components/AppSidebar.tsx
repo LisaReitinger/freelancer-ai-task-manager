@@ -1,4 +1,4 @@
-import { LayoutDashboard, Sparkles, Settings, ChevronLeft, ChevronRight, LogOut, FolderOpen } from "lucide-react";
+import { LayoutDashboard, Sparkles, Settings, ChevronLeft, ChevronRight, LogOut, FolderOpen, Plus } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,8 @@ import { Project } from "@/types";
 import { useProjectStore } from "@/store/projectStore";
 
 const navItems = [
-  { title: "Projects", icon: LayoutDashboard, url: "/" },
+  { title: "Create Project", icon: Plus, url: "/projects" },
+  { title: "My Tasks", icon: LayoutDashboard, url: "/my-tasks" },
   { title: "AI Assistant", icon: Sparkles, url: "/ai-assistant" },
   { title: "Settings", icon: Settings, url: "/settings" },
 ];
@@ -55,10 +56,8 @@ export function AppSidebar() {
   // FUNCTION: Handle project selection
   function handleProjectClick(project: Project) {
     setSelectedProject(project);
-    toast({
-      title: "Project selected",
-      description: `Now viewing: ${project.name}`,
-    });
+    // Navigate to the project's Kanban board
+    navigate(`/my-tasks/${project.id}`);
   }
 
   const handleSignOut = async () => {
@@ -134,8 +133,8 @@ export function AppSidebar() {
             {!collapsed && (
               <span className="font-medium transition-all duration-300 group-hover:text-primary">
                 {item.title}
-                {/* Show project count next to "Projects" */}
-                {item.title === "Projects" && !loadingProjects && (
+                {/* Show project count next to "My Tasks" */}
+                {item.title === "My Tasks" && !loadingProjects && (
                   <span className="ml-1 text-xs text-muted-foreground">
                     ({projects.length})
                   </span>
