@@ -1,10 +1,12 @@
 import { LayoutDashboard, Sparkles, Settings, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { getProjects } from "@/services/projects";
+import { Project } from "@/types";
 
 const navItems = [
   { title: "Projects", icon: LayoutDashboard, url: "/" },
@@ -16,6 +18,34 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [collapsed, setCollapsed] = useState(false);
+  
+  // STATE: Store projects and loading state
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
+  
+  // FUNCTION: Fetch projects from Supabase
+  async function fetchProjects() {
+    try {
+      setLoadingProjects(true);
+      const fetchedProjects = await getProjects();
+      setProjects(fetchedProjects);
+    } catch (error: unknown) {
+      console.error('Error fetching projects:', error);
+      toast({
+        title: "Error loading projects",
+        description: "Could not load your projects. Please refresh.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingProjects(false);
+    }
+  }
+  
+  // EFFECT: Fetch all projects when component mounts
+  useEffect(() => {
+    fetchProjects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -25,10 +55,10 @@ export function AppSidebar() {
         description: "You've been successfully signed out.",
       });
       navigate('/auth');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Failed to sign out",
         variant: "destructive",
       });
     }
@@ -90,6 +120,12 @@ export function AppSidebar() {
             {!collapsed && (
               <span className="font-medium transition-all duration-300 group-hover:text-primary">
                 {item.title}
+                {/* Show project count next to "Projects" */}
+                {item.title === "Projects" && !loadingProjects && (
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    ({projects.length})
+                  </span>
+                )}
               </span>
             )}
           </NavLink>
