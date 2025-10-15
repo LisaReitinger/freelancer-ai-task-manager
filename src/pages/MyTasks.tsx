@@ -3,12 +3,22 @@ import { useNavigate } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ProjectCard } from "@/components/ProjectCard";
 import { useToast } from "@/hooks/use-toast";
-import { getProjects } from "@/services/projects";
+import { getProjects, deleteProject } from "@/services/projects";
 import { getTasks } from "@/services/tasks";
 import { Project } from "@/types";
 import { useProjectStore } from "@/store/projectStore";
-import { Plus, FolderOpen } from "lucide-react";
+import { Plus, FolderOpen, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 /**
  * MY TASKS PAGE
@@ -37,13 +47,17 @@ const MyTasks = () => {
   const { toast } = useToast();
   const [projects, setProjects] = useState<ProjectWithStats[]>([]);
   const [loading, setLoading] = useState(true);
+  const [projectToDelete, setProjectToDelete] = useState<ProjectWithStats | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
-  // Get Zustand store function to set selected project
+  // Get Zustand store functions
+  const selectedProject = useProjectStore((state) => state.selectedProject);
   const setSelectedProject = useProjectStore((state) => state.setSelectedProject);
 
   // Load projects on mount
   useEffect(() => {
     loadProjects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Fetch projects and their task counts
@@ -97,6 +111,60 @@ const MyTasks = () => {
   // Handle create project button click
   function handleCreateProject() {
     navigate('/projects');
+  }
+
+  // Handle delete button click - opens confirmation dialog
+  function handleDeleteClick(project: ProjectWithStats) {
+    // Prevent deleting the currently active project
+    if (selectedProject?.id === project.id) {
+      toast({
+        title: "Cannot delete active project",
+        description: "Please close this project's Kanban board before deleting it.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setProjectToDelete(project);
+  }
+
+  // Handle confirmed deletion
+  async function handleConfirmDelete() {
+    if (!projectToDelete) return;
+    
+    setIsDeleting(true);
+    
+    try {
+      // Delete from Supabase (cascade deletes tasks automatically)
+      await deleteProject(projectToDelete.id);
+      
+      // Optimistically remove from UI
+      setProjects((prev) => prev.filter((p) => p.id !== projectToDelete.id));
+      
+      // Show success message
+      toast({
+        title: "Project deleted",
+        description: `"${projectToDelete.name}" and all its tasks have been deleted.`,
+      });
+      
+      // Close dialog
+      setProjectToDelete(null);
+      
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      toast({
+        title: "Error deleting project",
+        description: error instanceof Error ? error.message : "Failed to delete project. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  // Handle dialog cancel
+  function handleCancelDelete() {
+    setProjectToDelete(null);
   }
   return (
     <div className="min-h-screen flex animate-fade-in">
@@ -194,6 +262,8 @@ const MyTasks = () => {
                     taskCount={project.taskCount}
                     completedCount={project.completedCount}
                     onClick={() => handleProjectClick(project)}
+                    onDelete={() => handleDeleteClick(project)}
+                    isDeleting={isDeleting && projectToDelete?.id === project.id}
                   />
                 </div>
               ))}
@@ -201,6 +271,53 @@ const MyTasks = () => {
           )}
         </div>
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && handleCancelDelete()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Delete Project?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Are you sure you want to delete <span className="font-semibold text-foreground">"{projectToDelete?.name}"</span>?
+              </p>
+              <p className="text-sm">
+                This will permanently delete:
+              </p>
+              <ul className="text-sm list-disc list-inside space-y-1 text-muted-foreground">
+                <li>The project</li>
+                <li>All {projectToDelete?.taskCount || 0} tasks in this project</li>
+                <li>All project data and history</li>
+              </ul>
+              <p className="text-destructive font-semibold text-sm mt-4">
+                This action cannot be undone!
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDelete} disabled={isDeleting}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Project"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

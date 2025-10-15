@@ -1,6 +1,7 @@
-import { FolderOpen, Calendar, CheckCircle2, Clock } from "lucide-react";
+import { FolderOpen, Calendar, CheckCircle2, Clock, Trash2 } from "lucide-react";
 import { Project } from "@/types";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 /**
  * PROJECT CARD COMPONENT
@@ -20,14 +21,26 @@ interface ProjectCardProps {
   taskCount?: number;
   completedCount?: number;
   onClick: () => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
 }
 
 export function ProjectCard({ 
   project, 
   taskCount = 0, 
   completedCount = 0,
-  onClick 
+  onClick,
+  onDelete,
+  isDeleting = false
 }: ProjectCardProps) {
+  
+  // Handle delete button click (stop propagation to prevent card click)
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete();
+    }
+  };
   // Calculate completion percentage
   const completionPercentage = taskCount > 0 
     ? Math.round((completedCount / taskCount) * 100) 
@@ -119,22 +132,46 @@ export function ProjectCard({
         </div>
       )}
 
-      {/* Hover Indicator */}
-      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-          <svg
-            className="w-4 h-4 text-primary"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+      {/* Action Buttons (Top Right) */}
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        {/* Delete Button (shows on hover if onDelete provided) */}
+        {onDelete && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleDeleteClick}
+            disabled={isDeleting}
+            className={cn(
+              "w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity",
+              "hover:bg-destructive/10 hover:text-destructive",
+              "disabled:opacity-50"
+            )}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
+            {isDeleting ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-destructive" />
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
+          </Button>
+        )}
+        
+        {/* Arrow Indicator */}
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <svg
+              className="w-4 h-4 text-primary"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </div>
         </div>
       </div>
     </div>
