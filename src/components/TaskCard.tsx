@@ -27,14 +27,14 @@ export function TaskCard({ task, onDragStart, onClick }: TaskCardProps) {
       onDragStart={onDragStart}
       onClick={handleClick}
       className={cn(
-        "group glass-3d rounded-2xl p-3.5 cursor-pointer transition-all duration-300",
+        "group glass-3d rounded-2xl p-5 cursor-pointer transition-all duration-300",
         "border bg-gradient-to-br shadow-3d",
         "hover:scale-[1.02] hover:shadow-3d-strong glow-hover",
         "active:scale-[0.98]",
         priorityColors[task.priority]
       )}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-2.5">
         <GripVertical className="w-4 h-4 text-muted-foreground mt-1 flex-shrink-0 group-hover:text-primary transition-colors duration-300" />
         <div className="flex-1 space-y-1.5">
           <h4 className="font-semibold text-sm group-hover:text-primary transition-colors duration-300 line-clamp-1">{task.title}</h4>
