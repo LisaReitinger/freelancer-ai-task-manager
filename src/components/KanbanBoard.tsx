@@ -1,17 +1,13 @@
 import { useState } from "react";
 import { TaskCard } from "./TaskCard";
+import { Task } from "@/types";
 
-export interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: "todo" | "in-progress" | "done";
-  priority: "low" | "medium" | "high";
-}
+export type { Task };
 
 interface KanbanBoardProps {
   tasks: Task[];
   onTaskMove: (taskId: string, newStatus: Task["status"]) => void;
+  onTaskClick?: (task: Task) => void;
 }
 
 const columns: { id: Task["status"]; title: string; color: string }[] = [
@@ -20,7 +16,7 @@ const columns: { id: Task["status"]; title: string; color: string }[] = [
   { id: "done", title: "Done", color: "from-green-500 to-emerald-500" },
 ];
 
-export function KanbanBoard({ tasks, onTaskMove }: KanbanBoardProps) {
+export function KanbanBoard({ tasks, onTaskMove, onTaskClick }: KanbanBoardProps) {
   const [draggedTask, setDraggedTask] = useState<string | null>(null);
 
   const handleDragStart = (taskId: string) => {
@@ -68,6 +64,7 @@ export function KanbanBoard({ tasks, onTaskMove }: KanbanBoardProps) {
                   <TaskCard
                     task={task}
                     onDragStart={() => handleDragStart(task.id)}
+                    onClick={() => onTaskClick?.(task)}
                   />
                 </div>
               ))}

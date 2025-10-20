@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 interface TaskCardProps {
   task: Task;
   onDragStart: () => void;
+  onClick?: () => void;
 }
 
 const priorityColors = {
@@ -13,13 +14,20 @@ const priorityColors = {
   high: "from-red-500/20 to-pink-500/20 border-red-500/30",
 };
 
-export function TaskCard({ task, onDragStart }: TaskCardProps) {
+export function TaskCard({ task, onDragStart, onClick }: TaskCardProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    // Only trigger click if not dragging
+    if (e.defaultPrevented) return;
+    onClick?.();
+  };
+
   return (
     <div
       draggable
       onDragStart={onDragStart}
+      onClick={handleClick}
       className={cn(
-        "group glass-3d rounded-lg p-4 cursor-move transition-all duration-300",
+        "group glass-3d rounded-lg p-4 cursor-pointer transition-all duration-300",
         "border bg-gradient-to-br shadow-3d",
         "hover:scale-[1.03] hover:shadow-3d-strong glow-hover",
         "active:scale-[0.98]",
