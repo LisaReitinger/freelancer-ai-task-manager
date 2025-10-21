@@ -47,6 +47,7 @@ const Projects = () => {
   const handleCreateProject = async (projectName: string, projectDescription: string) => {
     setIsCreating(true);
     
+   
     try {
       // STEP 1: Create project in Supabase
       console.log("Creating project in Supabase...");

@@ -35,7 +35,7 @@ export function TaskCard({ task, onDragStart, onClick }: TaskCardProps) {
       )}
     >
       <div className="flex items-start gap-2.5">
-        <GripVertical className="w-4 h-4 text-muted-foreground mt-1 flex-shrink-0 group-hover:text-primary transition-colors duration-300" />
+        <GripVertical className="w-4 h-4 text-muted-foreground mt-1 flex-shrink-0 group-hover:text-primary transition-colors duration-300 group-hover:opacity-100" />
         <div className="flex-1 space-y-1.5">
           <h4 className="font-semibold text-sm group-hover:text-primary transition-colors duration-300 line-clamp-1">{task.title}</h4>
           <p className="text-xs text-muted-foreground/70 line-clamp-2">{task.description}</p>
